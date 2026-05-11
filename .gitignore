@@ -1,0 +1,5 @@
+/.venv
+/.vscode
+/CLAUDE.md
+/data
+/__pycache__

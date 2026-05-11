@@ -1,0 +1,310 @@
+{
+  "metadata": {
+    "source": "data\\frame_001953.jpg",
+    "mode": "body",
+    "timestamp": "2026-05-11T12:43:37.006091",
+    "frame_w": 948,
+    "frame_h": 533,
+    "detected": true,
+    "det_count": 1
+  },
+  "keypoints": {
+    "NOSE": {
+      "id": 0,
+      "x_norm": 0.561759,
+      "y_norm": 0.351979,
+      "z_norm": -0.113388,
+      "x_px": 532,
+      "y_px": 187,
+      "visibility": 0.9997
+    },
+    "LEFT_EYE_INNER": {
+      "id": 1,
+      "x_norm": 0.563816,
+      "y_norm": 0.336928,
+      "z_norm": -0.098841,
+      "x_px": 534,
+      "y_px": 179,
+      "visibility": 0.999
+    },
+    "LEFT_EYE": {
+      "id": 2,
+      "x_norm": 0.564118,
+      "y_norm": 0.335961,
+      "z_norm": -0.098896,
+      "x_px": 534,
+      "y_px": 179,
+      "visibility": 0.9989
+    },
+    "LEFT_EYE_OUTER": {
+      "id": 3,
+      "x_norm": 0.5644,
+      "y_norm": 0.334777,
+      "z_norm": -0.098953,
+      "x_px": 535,
+      "y_px": 178,
+      "visibility": 0.9991
+    },
+    "RIGHT_EYE_INNER": {
+      "id": 4,
+      "x_norm": 0.560645,
+      "y_norm": 0.33507,
+      "z_norm": -0.12466,
+      "x_px": 531,
+      "y_px": 178,
+      "visibility": 0.9993
+    },
+    "RIGHT_EYE": {
+      "id": 5,
+      "x_norm": 0.558594,
+      "y_norm": 0.332874,
+      "z_norm": -0.124672,
+      "x_px": 529,
+      "y_px": 177,
+      "visibility": 0.9992
+    },
+    "RIGHT_EYE_OUTER": {
+      "id": 6,
+      "x_norm": 0.556447,
+      "y_norm": 0.330453,
+      "z_norm": -0.124733,
+      "x_px": 527,
+      "y_px": 176,
+      "visibility": 0.9992
+    },
+    "LEFT_EAR": {
+      "id": 7,
+      "x_norm": 0.55383,
+      "y_norm": 0.325917,
+      "z_norm": -0.016487,
+      "x_px": 525,
+      "y_px": 173,
+      "visibility": 0.9976
+    },
+    "RIGHT_EAR": {
+      "id": 8,
+      "x_norm": 0.544325,
+      "y_norm": 0.321266,
+      "z_norm": -0.134337,
+      "x_px": 516,
+      "y_px": 171,
+      "visibility": 0.9991
+    },
+    "MOUTH_LEFT": {
+      "id": 9,
+      "x_norm": 0.556066,
+      "y_norm": 0.36203,
+      "z_norm": -0.079898,
+      "x_px": 527,
+      "y_px": 192,
+      "visibility": 0.9995
+    },
+    "MOUTH_RIGHT": {
+      "id": 10,
+      "x_norm": 0.551846,
+      "y_norm": 0.359782,
+      "z_norm": -0.114139,
+      "x_px": 523,
+      "y_px": 191,
+      "visibility": 0.9998
+    },
+    "LEFT_SHOULDER": {
+      "id": 11,
+      "x_norm": 0.543395,
+      "y_norm": 0.392091,
+      "z_norm": 0.066882,
+      "x_px": 515,
+      "y_px": 208,
+      "visibility": 0.9999
+    },
+    "RIGHT_SHOULDER": {
+      "id": 12,
+      "x_norm": 0.494824,
+      "y_norm": 0.368861,
+      "z_norm": -0.13747,
+      "x_px": 469,
+      "y_px": 196,
+      "visibility": 0.9998
+    },
+    "LEFT_ELBOW": {
+      "id": 13,
+      "x_norm": 0.562919,
+      "y_norm": 0.481114,
+      "z_norm": 0.11671,
+      "x_px": 533,
+      "y_px": 256,
+      "visibility": 0.9675
+    },
+    "RIGHT_ELBOW": {
+      "id": 14,
+      "x_norm": 0.450766,
+      "y_norm": 0.458594,
+      "z_norm": -0.178861,
+      "x_px": 427,
+      "y_px": 244,
+      "visibility": 0.9844
+    },
+    "LEFT_WRIST": {
+      "id": 15,
+      "x_norm": 0.611188,
+      "y_norm": 0.51634,
+      "z_norm": 0.02871,
+      "x_px": 579,
+      "y_px": 275,
+      "visibility": 0.9937
+    },
+    "RIGHT_WRIST": {
+      "id": 16,
+      "x_norm": 0.479381,
+      "y_norm": 0.514636,
+      "z_norm": -0.238296,
+      "x_px": 454,
+      "y_px": 274,
+      "visibility": 0.9907
+    },
+    "LEFT_PINKY": {
+      "id": 17,
+      "x_norm": 0.624164,
+      "y_norm": 0.525368,
+      "z_norm": 0.011317,
+      "x_px": 591,
+      "y_px": 280,
+      "visibility": 0.9851
+    },
+    "RIGHT_PINKY": {
+      "id": 18,
+      "x_norm": 0.486142,
+      "y_norm": 0.538344,
+      "z_norm": -0.265254,
+      "x_px": 460,
+      "y_px": 286,
+      "visibility": 0.9858
+    },
+    "LEFT_INDEX": {
+      "id": 19,
+      "x_norm": 0.625951,
+      "y_norm": 0.52236,
+      "z_norm": -0.011327,
+      "x_px": 593,
+      "y_px": 278,
+      "visibility": 0.9869
+    },
+    "RIGHT_INDEX": {
+      "id": 20,
+      "x_norm": 0.491324,
+      "y_norm": 0.529284,
+      "z_norm": -0.274819,
+      "x_px": 465,
+      "y_px": 282,
+      "visibility": 0.9853
+    },
+    "LEFT_THUMB": {
+      "id": 21,
+      "x_norm": 0.620992,
+      "y_norm": 0.519141,
+      "z_norm": 0.015461,
+      "x_px": 588,
+      "y_px": 276,
+      "visibility": 0.9841
+    },
+    "RIGHT_THUMB": {
+      "id": 22,
+      "x_norm": 0.490211,
+      "y_norm": 0.519543,
+      "z_norm": -0.2414,
+      "x_px": 464,
+      "y_px": 276,
+      "visibility": 0.9732
+    },
+    "LEFT_HIP": {
+      "id": 23,
+      "x_norm": 0.486619,
+      "y_norm": 0.5639,
+      "z_norm": 0.067444,
+      "x_px": 461,
+      "y_px": 300,
+      "visibility": 0.9972
+    },
+    "RIGHT_HIP": {
+      "id": 24,
+      "x_norm": 0.454639,
+      "y_norm": 0.550247,
+      "z_norm": -0.067446,
+      "x_px": 430,
+      "y_px": 293,
+      "visibility": 0.9962
+    },
+    "LEFT_KNEE": {
+      "id": 25,
+      "x_norm": 0.489864,
+      "y_norm": 0.726884,
+      "z_norm": 0.017581,
+      "x_px": 464,
+      "y_px": 387,
+      "visibility": 0.6732
+    },
+    "RIGHT_KNEE": {
+      "id": 26,
+      "x_norm": 0.469037,
+      "y_norm": 0.734694,
+      "z_norm": -0.100037,
+      "x_px": 444,
+      "y_px": 391,
+      "visibility": 0.9283
+    },
+    "LEFT_ANKLE": {
+      "id": 27,
+      "x_norm": 0.481857,
+      "y_norm": 0.873783,
+      "z_norm": 0.10052,
+      "x_px": 456,
+      "y_px": 465,
+      "visibility": 0.6876
+    },
+    "RIGHT_ANKLE": {
+      "id": 28,
+      "x_norm": 0.459122,
+      "y_norm": 0.892452,
+      "z_norm": -0.024595,
+      "x_px": 435,
+      "y_px": 475,
+      "visibility": 0.9376
+    },
+    "LEFT_HEEL": {
+      "id": 29,
+      "x_norm": 0.474703,
+      "y_norm": 0.888979,
+      "z_norm": 0.104371,
+      "x_px": 450,
+      "y_px": 473,
+      "visibility": 0.6641
+    },
+    "RIGHT_HEEL": {
+      "id": 30,
+      "x_norm": 0.451373,
+      "y_norm": 0.908405,
+      "z_norm": -0.022299,
+      "x_px": 427,
+      "y_px": 484,
+      "visibility": 0.8618
+    },
+    "LEFT_FOOT_INDEX": {
+      "id": 31,
+      "x_norm": 0.49688,
+      "y_norm": 0.924513,
+      "z_norm": 0.035045,
+      "x_px": 471,
+      "y_px": 492,
+      "visibility": 0.7514
+    },
+    "RIGHT_FOOT_INDEX": {
+      "id": 32,
+      "x_norm": 0.471661,
+      "y_norm": 0.940132,
+      "z_norm": -0.114664,
+      "x_px": 447,
+      "y_px": 501,
+      "visibility": 0.9131
+    }
+  }
+}
