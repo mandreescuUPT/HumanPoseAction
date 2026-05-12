@@ -122,7 +122,7 @@ LEFT_FOOT_INDEX, RIGHT_FOOT_INDEX
 
 ---
 
-## Metrici calculate de analyze_keypoints.py
+## Metrici calculate de analyze_keypoints.py (momentan in lucru)
 
 | Mode  | Metrică | Use Case |
 |-------|---------|----------|
@@ -138,7 +138,7 @@ LEFT_FOOT_INDEX, RIGHT_FOOT_INDEX
 
 ---
 
-## Integrare cu modelul matematic
+## Integrare cu modelul matematic (momentan in lucru)
 
 Keypoints-urile exportate pot fi folosite direct pentru:
 - **Vectorul de mișcare**: `v(t) = [Δx_px/Δt, Δy_px/Δt]` per keypoint
