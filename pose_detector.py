@@ -229,9 +229,24 @@ def draw_overlay(frame, frame_idx, fps, detection_count, mode):
                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, (180, 180, 180), 1, cv2.LINE_AA)
 
 
-# ── Main pipeline ──────────────────────────────────────────────────────────────
+def resize_frame(frame, max_size: int):
+    if max_size <= 0:
+        return frame
+
+    h, w = frame.shape[:2]
+    longest_edge = max(w, h)
+    if longest_edge <= max_size:
+        return frame
+
+    scale = max_size / longest_edge
+    new_w = max(1, int(w * scale))
+    new_h = max(1, int(h * scale))
+    return cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+
+# ── Main pipeline ───────────────────────────────────────────────────────────────
 def run(input_source, mode: str, output_dir: Path, show_display: bool,
-        save_every: int, confidence: float):
+        save_every: int, confidence: float, max_size: int):
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -241,8 +256,10 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video source: {input_source}")
 
-    frame_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    original_frame_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    original_frame_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    frame_w = original_frame_w
+    frame_h = original_frame_h
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     source_fps   = cap.get(cv2.CAP_PROP_FPS) or 30.0
 
@@ -250,7 +267,9 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
     print(f"  Pose Detector — mode: {mode.upper()}")
     print(f"  Source:  {input_source}")
     print(f"  Frames: {total_frames if total_frames > 0 else 'live'}")
-    print(f"  Res:    {frame_w}x{frame_h} @ {source_fps:.1f} fps")
+    print(f"  Original res: {original_frame_w}x{original_frame_h} @ {source_fps:.1f} fps")
+    if max_size > 0:
+        print(f"  Max frame size: {max_size} px")
     print(f"  Output: {output_dir}")
     print(f"{'='*55}\n")
 
@@ -259,12 +278,15 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
     # Final JSON structure
     session_data = {
         "metadata": {
-            "source":    str(input_source),
-            "mode":      mode,
-            "timestamp": datetime.now().isoformat(),
-            "frame_w":   frame_w,
-            "frame_h":   frame_h,
-            "source_fps": source_fps,
+            "source":               str(input_source),
+            "mode":                 mode,
+            "timestamp":            datetime.now().isoformat(),
+            "original_frame_w":     original_frame_w,
+            "original_frame_h":     original_frame_h,
+            "processed_frame_w":    frame_w,
+            "processed_frame_h":    frame_h,
+            "source_fps":           source_fps,
+            "max_frame_size":       max_size,
         },
         "frames": []
     }
@@ -279,6 +301,11 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
             ret, frame = cap.read()
             if not ret:
                 break
+
+            frame = resize_frame(frame, max_size)
+            frame_h, frame_w = frame.shape[:2]
+            session_data["metadata"]["processed_frame_w"] = frame_w
+            session_data["metadata"]["processed_frame_h"] = frame_h
 
             # FPS calc
             now = time.time()
@@ -408,6 +435,12 @@ def parse_args():
         default=0.5,
         help="Minimum detection threshold (0.0 – 1.0, default: 0.5)"
     )
+    parser.add_argument(
+        "--max-size",
+        type=int,
+        default=0,
+        help="Maximum frame edge size for OpenCV input. Frames larger than this will be resized while preserving aspect ratio. 0 = disabled"
+    )
     return parser.parse_args()
 
 
@@ -420,4 +453,5 @@ if __name__ == "__main__":
         show_display=not args.no_display,
         save_every=args.save_every,
         confidence=args.confidence,
+        max_size=args.max_size,
     )

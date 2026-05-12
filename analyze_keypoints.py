@@ -31,10 +31,10 @@ def velocity(kp_prev, kp_curr, dt):
 # ── Body metrics ───────────────────────────────────────────────────────────────
 def analyze_body(frames):
     """
-    Calculează:
-      - head_drop_angle: unghiul de aplecere a capului (drowsiness proxy)
+    Compute:
+      - head_drop_angle: unghiul de aplecare a capului (drowsiness proxy)
       - shoulder_asymmetry: diferența de înălțime umeri
-      - velocity a nasului (proxy pentru mișcare generală cap)
+      - nose velocity  (proxy pentru mișcare generală cap)
     """
     results = []
     prev_nose = None
@@ -169,8 +169,8 @@ def analyze_face(frames):
 def analyze_hands(frames):
     """
     Calculează:
-      - finger_spread: distanța medie între vârfurile degetelor (apertura mână)
-      - wrist_velocity: viteza încheieturii (proxy pentru gesture speed)
+      - finger_spread: distance between fingers (apertura mână)
+      - wrist_velocity: speed of wrist (proxy pentru gesture speed)
     """
     results = []
     prev_wrists = {}
@@ -226,7 +226,7 @@ def analyze_hands(frames):
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(description="Analizează JSON keypoints exportat de pose_detector.py")
+    parser = argparse.ArgumentParser(description="Analyze JSON keypoints exported by pose_detector.py")
     parser.add_argument("--input",  "-i", required=True, help="Cale JSON input")
     parser.add_argument("--mode",   "-m", choices=["body", "face", "hands"], default="body")
     parser.add_argument("--output", "-o", default=None, help="JSON output (default: <input>_metrics.json)")
@@ -251,7 +251,7 @@ def main():
 
     # Statistici sumare
     detected_frames = [m for m in metrics if m.get("detected")]
-    print(f"  Frames cu detecție: {len(detected_frames)}/{len(frames)}")
+    print(f"  Frames with detection: {len(detected_frames)}/{len(frames)}")
 
     if args.mode == "body" and detected_frames:
         tilts = [m["head_tilt_deg"] for m in detected_frames if m.get("head_tilt_deg") is not None]
