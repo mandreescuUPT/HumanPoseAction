@@ -275,10 +275,14 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
 
     detector = PoseDetector(mode=mode, min_detection_confidence=confidence)
 
+    source_path = Path(input_source) if input_source != "0" else None
+    source_file = source_path.stem if source_path else "webcam"
+
     # Final JSON structure
     session_data = {
         "metadata": {
             "source":               str(input_source),
+            "source_file":          source_file,
             "mode":                 mode,
             "timestamp":            datetime.now().isoformat(),
             "original_frame_w":     original_frame_w,
@@ -387,7 +391,11 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
     # Save final JSON
     session_data["metadata"]["total_frames_processed"] = frame_idx
     session_data["metadata"]["total_detections"]       = detected_count
-    json_path = save_json(session_data, output_dir, "keypoints_full.json")
+    json_path = save_json(session_data, output_dir, source_file + "_keypoints_full.json")
+
+    # Delete checkpoints now that the full file is saved
+    for cp in output_dir.glob("checkpoint_*.json"):
+        cp.unlink()
 
     print(f"\n{'='*55}")
     print(f"  Done! Frames processed: {frame_idx}")
