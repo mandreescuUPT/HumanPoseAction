@@ -63,6 +63,7 @@ python analyze_keypoints.py --input output/keypoints_full.json --mode hands
 {
   "metadata": {
     "source": "video.mp4",
+    "source_file": "video",
     "mode": "body",
     "timestamp": "2026-05-11T10:30:00",
     "frame_w": 1280,
@@ -116,8 +117,8 @@ LEFT_FOOT_INDEX, RIGHT_FOOT_INDEX
 ### Coordonate
 - `x_norm`, `y_norm`, `z_norm` — normalizate [0.0, 1.0]
 - `x_px`, `y_px` — pixeli absoluti în frame
-- `z_norm` — adâncime relativă față de șold (body) sau față (face)
-- `visibility` — probabilitate că keypoint-ul e vizibil (body only)
+- `z_norm` — adâncime relativă față de sold (body) sau fata (face)
+- `visibility` — probabilitate ca keypoint-ul e vizibil (body only)
 
 ---
 
@@ -125,9 +126,9 @@ LEFT_FOOT_INDEX, RIGHT_FOOT_INDEX
 
 | Mode  | Metrică | Use Case |
 |-------|---------|----------|
-| body  | `head_tilt_deg` | Detecție cap aplecat lateral |
+| body  | `head_tilt_deg` | Detectie cap aplecat lateral |
 | body  | `head_drop_px` | Detecție cap căzut (drowsiness) |
-| body  | `shoulder_asym_px` | Postura generală |
+| body  | `shoulder_asym_px` | Postura generala |
 | body  | `nose_velocity_px_s` | Viteza mișcării capului |
 | face  | `ear_left`, `ear_right` | Eye Aspect Ratio per ochi |
 | face  | `ear_avg` | EAR mediu |
@@ -144,11 +145,3 @@ Keypoints-urile exportate pot fi folosite direct pentru:
 - **Head pose (Euler angles)**: din poziția relativă nas/urechi/umeri
 - **Motion compensation**: warp events pe baza flow-ului estimat din Δkeypoints
 - **Kalman filter**: starea `[x, y, vx, vy]` per keypoint
-
-Datele JSON pot fi încărcate în MATLAB:
-```matlab
-data = jsondecode(fileread('keypoints_full.json'));
-nose_x = arrayfun(@(f) f.keypoints.NOSE.x_px, data.frames);
-nose_y = arrayfun(@(f) f.keypoints.NOSE.y_px, data.frames);
-plot(nose_x, nose_y);
-```
