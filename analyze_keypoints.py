@@ -1,10 +1,10 @@
 """
 Analyze Keypoints JSON
 ======================
-Citește JSON-ul exportat de pose_detector.py și calculează metrici
-de mișcare relevante pentru use case-urile automotive.
+Read exported JSON-ul by pose_detector.py and compute movement metrics 
+for automotive drowsiness/gesture analysis.
 
-Rulare:
+Usage:
   python analyze_keypoints.py --input output/keypoints_full.json --mode body
 """
 
@@ -13,31 +13,19 @@ import argparse
 import math
 from pathlib import Path
 
+from utils import dist2d, velocity, center_of_mass
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
-def dist2d(a, b):
-    return math.sqrt((a["x_px"] - b["x_px"])**2 + (a["y_px"] - b["y_px"])**2)
-
-
-def velocity(kp_prev, kp_curr, dt):
-    """Viteza în pixeli/secundă între două frame-uri."""
-    if kp_prev is None or kp_curr is None:
-        return 0.0
-    dx = kp_curr["x_px"] - kp_prev["x_px"]
-    dy = kp_curr["y_px"] - kp_prev["y_px"]
-    return math.sqrt(dx**2 + dy**2) / dt if dt > 0 else 0.0
-
-
-# ── Body metrics ───────────────────────────────────────────────────────────────
 def analyze_body(frames):
     """
     Compute:
       - head_drop_angle: unghiul de aplecare a capului (drowsiness proxy)
       - shoulder_asymmetry: diferența de înălțime umeri
       - nose velocity  (proxy pentru mișcare generală cap)
+      - com_velocity: speed of body center of mass (px/s)
     """
     results = []
     prev_nose = None
+    prev_com  = None
     prev_ts   = None
 
     for frame in frames:
@@ -72,23 +60,32 @@ def analyze_body(frames):
         if left_shoulder and right_shoulder:
             shoulder_asym = round(abs(left_shoulder["y_px"] - right_shoulder["y_px"]), 2)
 
-        # Velocitate cap
+        # Head velocity
         nose_velocity = None
         if prev_nose and nose and prev_ts is not None:
             dt = ts - prev_ts
             nose_velocity = round(velocity(prev_nose, nose, dt), 2)
 
+        # Center of mass velocity
+        com = center_of_mass(kps)
+        com_velocity = None
+        if prev_com and com and prev_ts is not None:
+            dt = ts - prev_ts
+            com_velocity = round(velocity(prev_com, com, dt), 2)
+
         results.append({
-            "frame_id":        frame["frame_id"],
-            "timestamp_s":     ts,
-            "detected":        True,
-            "head_tilt_deg":   head_tilt_deg,
-            "head_drop_px":    head_drop,
-            "shoulder_asym_px": shoulder_asym,
+            "frame_id":           frame["frame_id"],
+            "timestamp_s":        ts,
+            "detected":           True,
+            "head_tilt_deg":      head_tilt_deg,
+            "head_drop_px":       head_drop,
+            "shoulder_asym_px":   shoulder_asym,
             "nose_velocity_px_s": nose_velocity,
+            "com_velocity_px_s":  com_velocity,
         })
 
         prev_nose = nose
+        prev_com  = com
         prev_ts   = ts
 
     return results
@@ -227,7 +224,7 @@ def analyze_hands(frames):
 # ── Main ───────────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description="Analyze JSON keypoints exported by pose_detector.py")
-    parser.add_argument("--input",  "-i", required=True, help="Cale JSON input")
+    parser.add_argument("--input",  "-i", required=True, help="JSON input")
     parser.add_argument("--mode",   "-m", choices=["body", "face", "hands"], default="body")
     parser.add_argument("--output", "-o", default=None, help="JSON output (default: <input>_metrics.json)")
     args = parser.parse_args()
@@ -239,7 +236,7 @@ def main():
     frames = data["frames"]
     meta   = data["metadata"]
 
-    print(f"\nAnaliza: {input_path.name}")
+    print(f"\nAnalyza: {input_path.name}")
     print(f"  Mode: {args.mode}  |  Frames: {len(frames)}")
 
     if args.mode == "body":
@@ -249,7 +246,7 @@ def main():
     elif args.mode == "hands":
         metrics = analyze_hands(frames)
 
-    # Statistici sumare
+    # Statistics
     detected_frames = [m for m in metrics if m.get("detected")]
     print(f"  Frames with detection: {len(detected_frames)}/{len(frames)}")
 
@@ -257,6 +254,9 @@ def main():
         tilts = [m["head_tilt_deg"] for m in detected_frames if m.get("head_tilt_deg") is not None]
         if tilts:
             print(f"  Head tilt — min: {min(tilts):.1f}°  max: {max(tilts):.1f}°  avg: {sum(tilts)/len(tilts):.1f}°")
+        com_speeds = [m["com_velocity_px_s"] for m in detected_frames if m.get("com_velocity_px_s") is not None]
+        if com_speeds:
+            print(f"  COM speed  — min: {min(com_speeds):.1f}  max: {max(com_speeds):.1f}  avg: {sum(com_speeds)/len(com_speeds):.1f} px/s")
 
     if args.mode == "face" and detected_frames:
         ears = [m["faces"][0]["ear_avg"] for m in detected_frames
@@ -265,7 +265,7 @@ def main():
             blinks = sum(1 for e in ears if e < 0.20)
             print(f"  EAR avg: {sum(ears)/len(ears):.3f}  |  Blink events (EAR<0.20): {blinks}")
 
-    # Salvare metrics
+    # Save metrics
     out_path = Path(args.output) if args.output else input_path.with_name(
         input_path.stem + "_metrics.json"
     )
@@ -277,7 +277,7 @@ def main():
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=2, ensure_ascii=False)
 
-    print(f"  Metrics salvate: {out_path}\n")
+    print(f"  Saved metrics: {out_path}\n")
 
 
 if __name__ == "__main__":

@@ -17,47 +17,7 @@ from datetime import datetime
 
 import mediapipe as mp
 
-from detector import PoseDetector, POSE_LANDMARK_NAMES, PoseDrawing
-
-from pose_detector import (
-    PoseDetector,
-    extract_body_keypoints,
-    extract_face_keypoints,
-    extract_hand_keypoints,    
-    POSE_LANDMARK_NAMES,
-    HAND_LANDMARK_NAMES,
-)
-
-mp_pose  = mp.solutions.pose
-mp_face  = mp.solutions.face_mesh
-mp_hands = mp.solutions.hands
-
-
-def make_static_detector(mode: str, confidence: float):
-    """Same as PoseDetector but with static_image_mode=True (no tracking)."""
-    if mode == "body":
-        return mp_pose.Pose(
-            static_image_mode=True,
-            model_complexity=1,
-            enable_segmentation=False,
-            min_detection_confidence=confidence,
-        )
-    elif mode == "face":
-        return mp_face.FaceMesh(
-            static_image_mode=True,
-            max_num_faces=1,
-            refine_landmarks=True,
-            min_detection_confidence=confidence,
-        )
-    elif mode == "hands":
-        return mp_hands.Hands(
-            static_image_mode=True,
-            max_num_hands=2,
-            model_complexity=1,
-            min_detection_confidence=confidence,
-        )
-    raise ValueError(f"Unknown mode: {mode}. Choose: body | face | hands")
-
+from detector import PoseDrawing, KeyPointsExtractor, PoseDetector
 
 def run(image_path: Path, mode: str, output_dir: Path, show_display: bool, confidence: float):
     frame_bgr = cv2.imread(str(image_path))
@@ -75,7 +35,7 @@ def run(image_path: Path, mode: str, output_dir: Path, show_display: bool, confi
     frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
     frame_rgb.flags.writeable = False
 
-    detector = make_static_detector(mode, confidence)
+    detector = PoseDetector(mode=mode, min_detection_confidence=confidence, static_image=True)
     results = detector.process(frame_rgb)
     detector.close()
 
@@ -86,24 +46,24 @@ def run(image_path: Path, mode: str, output_dir: Path, show_display: bool, confi
     det_count = 0
 
     pose_drawing = PoseDrawing(results)
-
+    keypoints_extractor = KeyPointsExtractor(results)
     if mode == "body":
-        kp_data = extract_body_keypoints(results, frame_w, frame_h)
+        kp_data = keypoints_extractor.body_keypoints(frame_w, frame_h)
         det_count = 1 if kp_data else 0
         pose_drawing.draw_body(annotated)
     elif mode == "face":
-        kp_data = extract_face_keypoints(results, frame_w, frame_h)
+        kp_data = keypoints_extractor.face_keypoints(frame_w, frame_h)
         det_count = len(kp_data) if kp_data else 0
         pose_drawing.draw_face(annotated)
     elif mode == "hands":
-        kp_data = extract_hand_keypoints(results, frame_w, frame_h)
+        kp_data = keypoints_extractor.hands_keypoints(frame_w, frame_h)
         det_count = len(kp_data) if kp_data else 0
         pose_drawing.draw_hands(annotated)
 
     status = f"Detected: {det_count}" if det_count else "No detection"
     print(f"  {status}")
 
-    # HUD overlay
+    # text overlay
     cv2.rectangle(annotated, (0, 0), (frame_w, 34), (20, 20, 20), -1)
     overlay = annotated.copy()
     cv2.rectangle(overlay, (0, 0), (frame_w, 34), (20, 20, 20), -1)

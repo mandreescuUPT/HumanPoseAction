@@ -27,27 +27,50 @@ class PoseDrawing:
             )
 
     def draw_face(self, frame):
-        if self.results.face_landmarks:
-            mp_drawing.draw_landmarks(
-                frame,
-                self.results.face_landmarks,
-                mp_face.FACEMESH_TESSELATION,
-                landmark_drawing_spec=None,
+        if self.results.multi_face_landmarks:
+            for face_landmarks in self.results.multi_face_landmarks:
+                mp_drawing.draw_landmarks(
+                    frame,
+                    landmark_list=face_landmarks,
+                    connections=mp_face.FACEMESH_TESSELATION,
+                    landmark_drawing_spec=None,
                 connection_drawing_spec=mp_styles.get_default_face_mesh_tesselation_style(),
-            )
+                )
+                mp_drawing.draw_landmarks(
+                    image=frame,
+                    landmark_list=face_landmarks,
+                    connections=mp_face.FACEMESH_CONTOURS,
+                    landmark_drawing_spec=None,
+                    connection_drawing_spec=mp_styles.get_default_face_mesh_contours_style(),
+                )
+                # Iris (dacă refine_landmarks=True)
+                mp_drawing.draw_landmarks(
+                    image=frame,
+                    landmark_list=face_landmarks,
+                    connections=mp_face.FACEMESH_IRISES,
+                    landmark_drawing_spec=None,
+                    connection_drawing_spec=mp_styles.get_default_face_mesh_iris_connections_style(),
+                )
+
+    # def draw_hands(frame, results):
+    #     if results.multi_hand_landmarks:
+    #         for hand_landmarks in results.multi_hand_landmarks:
+    #             mp_drawing.draw_landmarks(
+    #                 frame,
+    #                 hand_landmarks,
+    #                 mp_hands.HAND_CONNECTIONS,
+    #                 mp_styles.get_default_hand_landmarks_style(),
+    #                 mp_styles.get_default_hand_connections_style(),
+    #             )
 
     def draw_hands(self, frame):
-        if self.results.left_hand_landmarks:
-            mp_drawing.draw_landmarks(
-                frame,
-                self.results.left_hand_landmarks,
-                mp_hands.HAND_CONNECTIONS,
-                landmark_drawing_spec=mp_styles.get_default_hand_landmarks_style(),
+        if self.results.multi_hand_landmarks:
+            for hand_landmarks in self.results.multi_hand_landmarks:
+                mp_drawing.draw_landmarks(
+                    frame,
+                    hand_landmarks,
+                    mp_hands.HAND_CONNECTIONS,
+                    mp_styles.get_default_hand_landmarks_style(),
+                    mp_styles.get_default_hand_connections_style(),
             )
-        if self.results.right_hand_landmarks:
-            mp_drawing.draw_landmarks(
-                frame,
-                self.results.right_hand_landmarks,
-                mp_hands.HAND_CONNECTIONS,
-                landmark_drawing_spec=mp_styles.get_default_hand_landmarks_style(),
-            )
+        

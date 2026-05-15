@@ -27,75 +27,7 @@ from datetime import datetime
 
 from utils import save_json
 from config.constants import *
-from detector import PoseDetector, POSE_LANDMARK_NAMES, PoseDrawing
-
-
-# ── Keypoint extraction ────────────────────────────────────────────────────────
-def extract_body_keypoints(results, frame_w, frame_h):
-    """Extrage 33 keypoints de corp cu coordonate normalizate și pixel."""
-    if not results.pose_landmarks:
-        return None
-
-    keypoints = {}
-    for idx, lm in enumerate(results.pose_landmarks.landmark):
-        name = POSE_LANDMARK_NAMES.get(idx, f"kp_{idx}")
-        keypoints[name] = {
-            "id": idx,
-            "x_norm": round(lm.x, 6),
-            "y_norm": round(lm.y, 6),
-            "z_norm": round(lm.z, 6),         # adâncime relativă
-            "x_px":   int(lm.x * frame_w),
-            "y_px":   int(lm.y * frame_h),
-            "visibility": round(lm.visibility, 4),
-        }
-    return keypoints
-
-
-def extract_face_keypoints(results, frame_w, frame_h):
-    """Extrage primele 468 (+ 10 iris) landmark-uri faciale."""
-    if not results.multi_face_landmarks:
-        return None
-
-    face_data = []
-    for face_lms in results.multi_face_landmarks:
-        kps = []
-        for idx, lm in enumerate(face_lms.landmark):
-            kps.append({
-                "id":     idx,
-                "x_norm": round(lm.x, 6),
-                "y_norm": round(lm.y, 6),
-                "z_norm": round(lm.z, 6),
-                "x_px":   int(lm.x * frame_w),
-                "y_px":   int(lm.y * frame_h),
-            })
-        face_data.append(kps)
-    return face_data
-
-
-def extract_hand_keypoints(results, frame_w, frame_h):
-    """Extrage 21 keypoints per mână, cu eticheta Left/Right."""
-    if not results.multi_hand_landmarks:
-        return None
-
-    hands_data = []
-    handedness = results.multi_handedness if results.multi_handedness else []
-
-    for i, hand_lms in enumerate(results.multi_hand_landmarks):
-        label = handedness[i].classification[0].label if i < len(handedness) else "Unknown"
-        kps = {}
-        for idx, lm in enumerate(hand_lms.landmark):
-            name = HAND_LANDMARK_NAMES.get(idx, f"kp_{idx}")
-            kps[name] = {
-                "id":   idx,
-                "x_norm": round(lm.x, 6),
-                "y_norm": round(lm.y, 6),
-                "z_norm": round(lm.z, 6),
-                "x_px": int(lm.x * frame_w),
-                "y_px": int(lm.y * frame_h),
-            }
-        hands_data.append({"hand": label, "keypoints": kps})
-    return hands_data
-
+from detector import PoseDetector, POSE_LANDMARK_NAMES, PoseDrawing, KeyPointsExtractor
 
 def draw_overlay(frame, frame_idx, mode):
     """Info on frame."""
@@ -183,7 +115,7 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
     frame_idx      = 0
     detected_count = 0
     fps_timer      = time.time()
-    fps_display    = 0.0
+    # fps_display    = 0.0
 
     try:
         while cap.isOpened():
@@ -209,25 +141,27 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
             frame_rgb.flags.writeable = True
 
             pose_drawing = PoseDrawing(results)
+            keypoints_extractor = KeyPointsExtractor(results)
 
             # Extract keypoints
             kp_data   = None
             det_count = 0
 
             if mode == "body":
-                kp_data = extract_body_keypoints(results, frame_w, frame_h)
+                # kp_data = extract_body_keypoints(results, frame_w, frame_h)
+                kp_data = keypoints_extractor.body_keypoints(frame_w, frame_h)
                 det_count = 1 if kp_data else 0
                 if show_display:                    
                     pose_drawing.draw_body(frame)
 
             elif mode == "face":
-                kp_data = extract_face_keypoints(results, frame_w, frame_h)
+                kp_data = keypoints_extractor.face_keypoints(frame_w, frame_h)
                 det_count = len(kp_data) if kp_data else 0
                 if show_display:
                     pose_drawing.draw_face(frame)
 
             elif mode == "hands":
-                kp_data = extract_hand_keypoints(results, frame_w, frame_h)
+                kp_data = keypoints_extractor.hands_keypoints(frame_w, frame_h)
                 det_count = len(kp_data) if kp_data else 0
                 if show_display:
                     pose_drawing.draw_hands(frame)
@@ -278,7 +212,8 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
     # Save final JSON
     session_data["metadata"]["total_frames_processed"] = frame_idx
     session_data["metadata"]["total_detections"]       = detected_count
-    json_path = save_json(session_data, output_dir, source_file + "_keypoints_full.json")
+    file_name = f"{source_file}_keypoints_full_{mode}.json"
+    json_path = save_json(session_data, output_dir, file_name)
 
     # Delete checkpoints now that the full file is saved
     for cp in output_dir.glob("checkpoint_*.json"):

@@ -1,6 +1,6 @@
 import numpy as np
 
-from pose_detector import POSE_LANDMARK_NAMES
+from pose_detection import POSE_LANDMARK_NAMES
 
 class BodyPosture:
     def __init__(self, keypoints):
