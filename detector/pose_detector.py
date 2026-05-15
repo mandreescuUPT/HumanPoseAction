@@ -39,7 +39,7 @@ class PoseDetector:
                 min_tracking_confidence=0.5,
             )
         else:
-            raise ValueError(f"Mode necunoscut: {mode}. Alege: body | face | hands")
+            raise ValueError(f"Unknown mode: {mode}. Choose: body | face | hands")
 
     def process(self, frame_rgb):
         return self.detector.process(frame_rgb)

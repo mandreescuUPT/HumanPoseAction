@@ -123,7 +123,9 @@ LEFT_FOOT_INDEX, RIGHT_FOOT_INDEX
 
 ### Vizualizare
 ```bash
-# Miscarea punctelor se poate vizualiza cu ajutorul unui script care primeste ca argument fisierul *.json in care avem punctele salvate pentru fiecare frame.  
+# Miscarea punctelor se poate vizualiza cu ajutorul unui script care 
+# primeste ca argument fisierul *.json in care avem punctele salvate 
+# pentru fiecare frame.  
 python animate_keypoints.py --input output/walk_normal_keypoints_full.json 
 ```
 

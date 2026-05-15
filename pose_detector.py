@@ -25,9 +25,6 @@ import argparse
 from pathlib import Path
 from datetime import datetime
 
-# ── MediaPipe imports ──────────────────────────────────────────────────────────
-# import mediapipe as mp
-
 from utils import save_json
 from config.constants import *
 from detector import PoseDetector, POSE_LANDMARK_NAMES, PoseDrawing
@@ -255,7 +252,7 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
 
             # Display
             if show_display:
-                draw_overlay(frame, frame_idx, fps_display, det_count, mode)
+                draw_overlay(frame, frame_idx, mode)
                 cv2.imshow("Pose Detector", frame)
 
                 key = cv2.waitKey(1) & 0xFF
