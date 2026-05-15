@@ -1,4 +1,7 @@
 /.venv
 /.vscode
 /CLAUDE.md
-/__pycache__
+__pycache__
+*/__pycache__
+output/*
+data/dance2.mp4

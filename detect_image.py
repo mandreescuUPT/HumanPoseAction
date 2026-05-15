@@ -17,14 +17,13 @@ from datetime import datetime
 
 import mediapipe as mp
 
+from detector import PoseDetector, POSE_LANDMARK_NAMES, PoseDrawing
+
 from pose_detector import (
     PoseDetector,
     extract_body_keypoints,
     extract_face_keypoints,
-    extract_hand_keypoints,
-    draw_body,
-    draw_face,
-    draw_hands,
+    extract_hand_keypoints,    
     POSE_LANDMARK_NAMES,
     HAND_LANDMARK_NAMES,
 )
@@ -86,18 +85,20 @@ def run(image_path: Path, mode: str, output_dir: Path, show_display: bool, confi
     kp_data = None
     det_count = 0
 
+    pose_drawing = PoseDrawing(results)
+
     if mode == "body":
         kp_data = extract_body_keypoints(results, frame_w, frame_h)
         det_count = 1 if kp_data else 0
-        draw_body(annotated, results)
+        pose_drawing.draw_body(annotated)
     elif mode == "face":
         kp_data = extract_face_keypoints(results, frame_w, frame_h)
         det_count = len(kp_data) if kp_data else 0
-        draw_face(annotated, results)
+        pose_drawing.draw_face(annotated)
     elif mode == "hands":
         kp_data = extract_hand_keypoints(results, frame_w, frame_h)
         det_count = len(kp_data) if kp_data else 0
-        draw_hands(annotated, results)
+        pose_drawing.draw_hands(annotated)
 
     status = f"Detected: {det_count}" if det_count else "No detection"
     print(f"  {status}")

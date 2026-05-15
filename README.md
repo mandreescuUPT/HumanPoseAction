@@ -45,7 +45,7 @@ python pose_detector.py --input video.mp4 --mode body --no-display
 ## Analiză metrici
 
 ```bash
-# Calculează head tilt, head drop, shoulder asymmetry, velocitate
+# Calculează head tilt, head drop, shoulder asymmetry, velocity
 python analyze_keypoints.py --input output/keypoints_full.json --mode body
 
 # Calculează EAR (Eye Aspect Ratio) pentru blink/drowsiness
@@ -62,8 +62,7 @@ python analyze_keypoints.py --input output/keypoints_full.json --mode hands
 ```json
 {
   "metadata": {
-    "source": "video.mp4",
-    "source_file": "video",
+    "source": "video.mp4",    
     "mode": "body",
     "timestamp": "2026-05-11T10:30:00",
     "frame_w": 1280,
@@ -121,6 +120,12 @@ LEFT_FOOT_INDEX, RIGHT_FOOT_INDEX
 - `visibility` — probabilitate ca keypoint-ul e vizibil (body only)
 
 ---
+
+### Vizualizare
+```bash
+# Miscarea punctelor se poate vizualiza cu ajutorul unui script care primeste ca argument fisierul *.json in care avem punctele salvate pentru fiecare frame.  
+python animate_keypoints.py --input output/walk_normal_keypoints_full.json 
+```
 
 ## Metrici calculate de analyze_keypoints.py (momentan in lucru)
 

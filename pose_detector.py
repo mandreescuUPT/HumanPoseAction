@@ -26,69 +26,11 @@ from pathlib import Path
 from datetime import datetime
 
 # ── MediaPipe imports ──────────────────────────────────────────────────────────
-import mediapipe as mp
+# import mediapipe as mp
 
 from utils import save_json
-
-mp_pose     = mp.solutions.pose
-mp_face     = mp.solutions.face_mesh
-mp_hands    = mp.solutions.hands
-mp_drawing  = mp.solutions.drawing_utils
-mp_styles   = mp.solutions.drawing_styles
-
-
-# ── Keypoint name maps ─────────────────────────────────────────────────────────
-POSE_LANDMARK_NAMES = {i: lm.name for i, lm in enumerate(mp_pose.PoseLandmark)}
-
-HAND_LANDMARK_NAMES = {
-    0: "WRIST",
-    1: "THUMB_CMC", 2: "THUMB_MCP", 3: "THUMB_IP", 4: "THUMB_TIP",
-    5: "INDEX_MCP",  6: "INDEX_PIP",  7: "INDEX_DIP",  8: "INDEX_TIP",
-    9: "MIDDLE_MCP", 10: "MIDDLE_PIP", 11: "MIDDLE_DIP", 12: "MIDDLE_TIP",
-    13: "RING_MCP",  14: "RING_PIP",  15: "RING_DIP",  16: "RING_TIP",
-    17: "PINKY_MCP", 18: "PINKY_PIP", 19: "PINKY_DIP", 20: "PINKY_TIP",
-}
-
-
-# ── Core detector class ────────────────────────────────────────────────────────
-class PoseDetector:
-    def __init__(self, mode: str = "body", min_detection_confidence: float = 0.5):
-        self.mode = mode
-        self.detector = None
-
-        if mode == "body":
-            self.detector = mp_pose.Pose(
-                static_image_mode=False,
-                model_complexity=1,               # 0=lite, 1=full, 2=heavy
-                enable_segmentation=False,
-                min_detection_confidence=min_detection_confidence,
-                min_tracking_confidence=0.5,
-            )
-        elif mode == "face":
-            self.detector = mp_face.FaceMesh(
-                static_image_mode=False,
-                max_num_faces=1,
-                refine_landmarks=True,            # include iris landmarks
-                min_detection_confidence=min_detection_confidence,
-                min_tracking_confidence=0.5,
-            )
-        elif mode == "hands":
-            self.detector = mp_hands.Hands(
-                static_image_mode=False,
-                max_num_hands=2,
-                model_complexity=1,
-                min_detection_confidence=min_detection_confidence,
-                min_tracking_confidence=0.5,
-            )
-        else:
-            raise ValueError(f"Mode necunoscut: {mode}. Alege: body | face | hands")
-
-    def process(self, frame_rgb):
-        return self.detector.process(frame_rgb)
-
-    def close(self):
-        if self.detector:
-            self.detector.close()
+from config.constants import *
+from detector import PoseDetector, POSE_LANDMARK_NAMES, PoseDrawing
 
 
 # ── Keypoint extraction ────────────────────────────────────────────────────────
@@ -158,73 +100,19 @@ def extract_hand_keypoints(results, frame_w, frame_h):
     return hands_data
 
 
-# ── Visualization ──────────────────────────────────────────────────────────────
-def draw_body(frame, results):
-    mp_drawing.draw_landmarks(
-        frame,
-        results.pose_landmarks,
-        mp_pose.POSE_CONNECTIONS,
-        landmark_drawing_spec=mp_drawing.DrawingSpec(
-            color=(0, 255, 120), thickness=2, circle_radius=3
-        ),
-        connection_drawing_spec=mp_drawing.DrawingSpec(
-            color=(255, 200, 0), thickness=2
-        ),
-    )
-
-
-def draw_face(frame, results):
-    if results.multi_face_landmarks:
-        for face_landmarks in results.multi_face_landmarks:
-            mp_drawing.draw_landmarks(
-                image=frame,
-                landmark_list=face_landmarks,
-                connections=mp_face.FACEMESH_TESSELATION,
-                landmark_drawing_spec=None,
-                connection_drawing_spec=mp_styles.get_default_face_mesh_tesselation_style(),
-            )
-            mp_drawing.draw_landmarks(
-                image=frame,
-                landmark_list=face_landmarks,
-                connections=mp_face.FACEMESH_CONTOURS,
-                landmark_drawing_spec=None,
-                connection_drawing_spec=mp_styles.get_default_face_mesh_contours_style(),
-            )
-            # Iris (dacă refine_landmarks=True)
-            mp_drawing.draw_landmarks(
-                image=frame,
-                landmark_list=face_landmarks,
-                connections=mp_face.FACEMESH_IRISES,
-                landmark_drawing_spec=None,
-                connection_drawing_spec=mp_styles.get_default_face_mesh_iris_connections_style(),
-            )
-
-
-def draw_hands(frame, results):
-    if results.multi_hand_landmarks:
-        for hand_landmarks in results.multi_hand_landmarks:
-            mp_drawing.draw_landmarks(
-                frame,
-                hand_landmarks,
-                mp_hands.HAND_CONNECTIONS,
-                mp_styles.get_default_hand_landmarks_style(),
-                mp_styles.get_default_hand_connections_style(),
-            )
-
-
-def draw_overlay(frame, frame_idx, fps, detection_count, mode):
-    """HUD info pe frame."""
+def draw_overlay(frame, frame_idx, mode):
+    """Info on frame."""
     h, w = frame.shape[:2]
-    # Fundal semi-transparent
+    # Semi-transparent
     overlay = frame.copy()
     cv2.rectangle(overlay, (0, 0), (w, 36), (20, 20, 20), -1)
     cv2.addWeighted(overlay, 0.6, frame, 0.4, 0, frame)
 
-    text = f"Mode: {mode.upper()}  |  Frame: {frame_idx:05d}  |  FPS: {fps:.1f}  |  Detected: {detection_count}"
+    text = f"Mode: {mode.upper()}  |  Frame: {frame_idx:05d}"
     cv2.putText(frame, text, (10, 24),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 180), 1, cv2.LINE_AA)
 
-    # Instrucțiuni
+    # Commands
     cv2.putText(frame, "Q = quit  |  S = save snapshot", (10, h - 10),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, (180, 180, 180), 1, cv2.LINE_AA)
 
@@ -323,27 +211,29 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
             results = detector.process(frame_rgb)
             frame_rgb.flags.writeable = True
 
-            # Extrage keypoints
+            pose_drawing = PoseDrawing(results)
+
+            # Extract keypoints
             kp_data   = None
             det_count = 0
 
             if mode == "body":
                 kp_data = extract_body_keypoints(results, frame_w, frame_h)
                 det_count = 1 if kp_data else 0
-                if show_display:
-                    draw_body(frame, results)
+                if show_display:                    
+                    pose_drawing.draw_body(frame)
 
             elif mode == "face":
                 kp_data = extract_face_keypoints(results, frame_w, frame_h)
                 det_count = len(kp_data) if kp_data else 0
                 if show_display:
-                    draw_face(frame, results)
+                    pose_drawing.draw_face(frame)
 
             elif mode == "hands":
                 kp_data = extract_hand_keypoints(results, frame_w, frame_h)
                 det_count = len(kp_data) if kp_data else 0
                 if show_display:
-                    draw_hands(frame, results)
+                    pose_drawing.draw_hands(frame)
 
             detected_count += det_count
 
