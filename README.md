@@ -129,6 +129,36 @@ LEFT_FOOT_INDEX, RIGHT_FOOT_INDEX
 python animate_keypoints.py --input output/walk_normal_keypoints_full.json 
 ```
 
+### Vizualizare predicție vs. ground truth (NTU RGB+D)
+
+Suprapune predicția MediaPipe (exportată de `pose_detection.py`) peste scheletul ground-truth
+NTU RGB+D (fișier `.skeleton`), pe același video, pentru comparație directă.
+
+```bash
+python visualize_prediction_vs_gt.py --keypoints output/S001C003P004R001A031_rgb_keypoints_full_body.json
+```
+
+Video-ul și fișierul `.skeleton` corespunzător sunt găsite automat pornind de la `metadata.source`
+și numele fișierului din JSON (se elimină sufixul `_rgb`). Pot fi suprascrise manual:
+
+```bash
+python visualize_prediction_vs_gt.py \
+  --keypoints output/S001C003P004R001A031_rgb_keypoints_full_body.json \
+  --video     d:/datasets/NTU_RGB/nturgb+d_rgb/S001C003P004R001A031_rgb.avi \
+  --skeleton  d:/datasets/NTU_RGB/nturgb+d_skeletons/S001C003P004R001A031.skeleton
+```
+
+```
+--keypoints        JSON exportat de pose_detection.py (mode=body)  [obligatoriu]
+--video            Cale video (default: metadata.source din JSON)
+--skeleton         Cale fișier .skeleton GT (default: derivat din numele sursei)
+--skeleton-folder  Director în care se caută .skeleton-ul (default: d:/datasets/NTU_RGB/nturgb+d_skeletons)
+--width, --height  Dimensiuni afișare (default: width=800, height=auto)
+```
+
+Comenzi în timpul redării: `SPACE` = pauză/resume, `n` = frame următor (când e în pauză), `q` = ieșire.
+Predicția MediaPipe apare portocaliu, scheletul GT apare cyan/magenta (per subiect).
+
 ## Metrici calculate de analyze_keypoints.py (momentan in lucru)
 
 | Mode  | Metrică | Use Case |
