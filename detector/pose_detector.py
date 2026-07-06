@@ -68,8 +68,8 @@ class KeyPointsExtractor:
             name = POSE_LANDMARK_NAMES.get(idx, f"kp_{idx}")
             keypoints[name] = {
                 "id": idx,
-                "x_norm": round(lm.x, 6),
-                "y_norm": round(lm.y, 6),
+                "x_norm": round(lm.x, 6), # coordonate normalizate [0,1] raportate la dimensiunea imaginii
+                "y_norm": round(lm.y, 6), # coordonate normalizate [0,1] raportate la dimensiunea imaginii
                 "z_norm": round(lm.z, 6),         # relative depth (negative = in front of camera)
                 "x_px":   int(lm.x * frame_w),
                 "y_px":   int(lm.y * frame_h),
@@ -77,26 +77,7 @@ class KeyPointsExtractor:
             }
         return keypoints
     
-    # def extract_face_keypoints(results, frame_w, frame_h):
-    # """Extrage primele 468 (+ 10 iris) landmark-uri faciale."""
-    # if not results.multi_face_landmarks:
-    #     return None
-
-    # face_data = []
-    # for face_lms in results.multi_face_landmarks:
-    #     kps = []
-    #     for idx, lm in enumerate(face_lms.landmark):
-    #         kps.append({
-    #             "id":     idx,
-    #             "x_norm": round(lm.x, 6),
-    #             "y_norm": round(lm.y, 6),
-    #             "z_norm": round(lm.z, 6),
-    #             "x_px":   int(lm.x * frame_w),
-    #             "y_px":   int(lm.y * frame_h),
-    #         })
-    #     face_data.append(kps)
-    # return face_data
-
+    
     def face_keypoints(self, frame_w, frame_h):
         """Extrage primele 468 (+ 10 iris) landmark-uri faciale."""
         if not self.results.multi_face_landmarks:

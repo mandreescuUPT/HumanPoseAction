@@ -52,17 +52,7 @@ class PoseDrawing:
                     connection_drawing_spec=mp_styles.get_default_face_mesh_iris_connections_style(),
                 )
 
-    # def draw_hands(frame, results):
-    #     if results.multi_hand_landmarks:
-    #         for hand_landmarks in results.multi_hand_landmarks:
-    #             mp_drawing.draw_landmarks(
-    #                 frame,
-    #                 hand_landmarks,
-    #                 mp_hands.HAND_CONNECTIONS,
-    #                 mp_styles.get_default_hand_landmarks_style(),
-    #                 mp_styles.get_default_hand_connections_style(),
-    #             )
-
+    
     def draw_hands(self, frame):
         if self.results.multi_hand_landmarks:
             for hand_landmarks in self.results.multi_hand_landmarks:

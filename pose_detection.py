@@ -154,17 +154,17 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
                 if show_display:                    
                     pose_drawing.draw_body(frame)
 
-            elif mode == "face":
-                kp_data = keypoints_extractor.face_keypoints(frame_w, frame_h)
-                det_count = len(kp_data) if kp_data else 0
-                if show_display:
-                    pose_drawing.draw_face(frame)
+            # elif mode == "face":
+            #     kp_data = keypoints_extractor.face_keypoints(frame_w, frame_h)
+            #     det_count = len(kp_data) if kp_data else 0
+            #     if show_display:
+            #         pose_drawing.draw_face(frame)
 
-            elif mode == "hands":
-                kp_data = keypoints_extractor.hands_keypoints(frame_w, frame_h)
-                det_count = len(kp_data) if kp_data else 0
-                if show_display:
-                    pose_drawing.draw_hands(frame)
+            # elif mode == "hands":
+            #     kp_data = keypoints_extractor.hands_keypoints(frame_w, frame_h)
+            #     det_count = len(kp_data) if kp_data else 0
+            #     if show_display:
+            #         pose_drawing.draw_hands(frame)
 
             detected_count += det_count
 
@@ -268,7 +268,7 @@ def parse_args():
     parser.add_argument(
         "--max-size",
         type=int,
-        default=0,
+        default=600,
         help="Maximum frame edge size for OpenCV input. Frames larger than this will be resized while preserving aspect ratio. 0 = disabled"
     )
     return parser.parse_args()

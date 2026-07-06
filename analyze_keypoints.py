@@ -19,8 +19,8 @@ def analyze_body(frames):
     """
     Compute:
       - head_drop_angle: unghiul de aplecare a capului (drowsiness proxy)
-      - shoulder_asymmetry: diferența de înălțime umeri
-      - nose velocity  (proxy pentru mișcare generală cap)
+      - shoulder_asymmetry: diferența de înăltime umeri
+      - nose velocity  (proxy pentru miscare generala cap)
       - com_velocity: speed of body center of mass (px/s)
     """
     results = []
