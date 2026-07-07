@@ -17,16 +17,6 @@ python pose_detection.py --input video.mp4 --mode body
 python pose_detection.py --input 0 --mode body          # webcam
 ```
 
-### Face mesh (468 keypoints + iris — blink rate, gaze)
-```bash
-python pose_detection.py --input video.mp4 --mode face
-```
-
-### Hands (21 keypoints × 2 mâini — gesture, grip)
-```bash
-python pose_detection.py --input video.mp4 --mode hands
-```
-
 ### Headless (fără fereastră OpenCV, mai rapid pentru batch)
 ```bash
 python pose_detection.py --input video.mp4 --mode body --no-display
