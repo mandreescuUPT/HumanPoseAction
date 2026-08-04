@@ -37,11 +37,15 @@ import mp_to_mmskeleton
 import labels as label_maps
 
 # Location of the mmskeleton repo: MMSKELETON_ROOT env var if set, else
-# ../mmskeleton relative to this file (i.e. clone mmskeleton as a sibling of
-# this train/ folder).
+# ../../mmskeleton relative to this file -- i.e. clone mmskeleton as a
+# sibling of the HumanPoseAction/ repo itself, not inside it:
+#   workspace/
+#   ├── HumanPoseAction/train/   <- this file lives here
+#   ├── mmskeleton/               <- expected here
+#   └── effgcn_cam/
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _MMSKELETON_ROOT = os.environ.get("MMSKELETON_ROOT") or os.path.normpath(
-    os.path.join(_HERE, "..", "mmskeleton"))
+    os.path.join(_HERE, "..", "..", "mmskeleton"))
 
 # Friendly names -> (checkpoint filename, graph layout, label set).
 MODELS = {
@@ -142,7 +146,13 @@ def build_input_tensor(skeleton, num_track=2, max_frames=None):
     return tensor
 
 
-def load_model(checkpoint, layout):
+def pick_device(requested):
+    if requested != "auto":
+        return torch.device(requested)
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def load_model(checkpoint, layout, device="cpu"):
     """Build ST_GCN_18 for `layout` and load `checkpoint` into it (eval mode)."""
     ST_GCN_18 = load_stgcn_model_class()
     model = ST_GCN_18(
@@ -160,12 +170,13 @@ def load_model(checkpoint, layout):
         print("[infer] (info) missing keys not in checkpoint: %d" % len(missing))
     if unexpected:
         print("[infer] (info) unexpected keys in checkpoint: %d" % len(unexpected))
+    model.to(device)
     model.eval()
     return model
 
 
 def predict(keypoints_path, checkpoint, layout, num_track=2, max_frames=None,
-            model=None):
+            model=None, device="cpu"):
     """Full softmax over the clip.
 
     Returns (probs, info) where probs is a (num_class,) float list and info is
@@ -182,10 +193,11 @@ def predict(keypoints_path, checkpoint, layout, num_track=2, max_frames=None,
         raise SystemExit("[infer] ERROR: no detected frames in input.")
 
     x = build_input_tensor(skeleton, num_track=num_track, max_frames=max_frames)
+    x = x.to(device)
     print("[infer] model input tensor (N,C,T,V,M) = %s" % (tuple(x.shape),))
 
     if model is None:
-        model = load_model(checkpoint, layout)
+        model = load_model(checkpoint, layout, device=device)
     with torch.no_grad():
         logits = model(x)                       # (1, num_class)
         probs = torch.softmax(logits, dim=1)[0]
@@ -196,9 +208,10 @@ def predict(keypoints_path, checkpoint, layout, num_track=2, max_frames=None,
 
 
 def run(keypoints_path, checkpoint, layout, label_set, topk=5,
-        num_track=2, max_frames=None):
+        num_track=2, max_frames=None, device="cpu"):
     probs, _info = predict(keypoints_path, checkpoint, layout,
-                           num_track=num_track, max_frames=max_frames)
+                           num_track=num_track, max_frames=max_frames,
+                           device=device)
     probs = torch.tensor(probs)
 
     names = label_maps.labels_for(label_set)
@@ -226,6 +239,8 @@ def _cli():
     p.add_argument("--num-track", type=int, default=2,
                    help="M dimension / persons (kinetics=2, ntu=2)")
     p.add_argument("--max-frames", type=int, default=None)
+    p.add_argument("--device", default="auto",
+                   help="auto | cpu | cuda (default: cuda if available)")
     args = p.parse_args()
 
     layout = args.layout
@@ -242,7 +257,8 @@ def _cli():
     label_set = label_set or layout
 
     run(args.keypoints, checkpoint, layout, label_set,
-        topk=args.topk, num_track=args.num_track, max_frames=args.max_frames)
+        topk=args.topk, num_track=args.num_track, max_frames=args.max_frames,
+        device=pick_device(args.device))
 
 
 if __name__ == "__main__":

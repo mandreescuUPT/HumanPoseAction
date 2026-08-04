@@ -166,11 +166,16 @@ def train(data_root, epochs, batch_size, lr, window, val_window, layout,
         print(f"[train] embedding label_map ({len(label_map)} classes) "
               "into checkpoints")
 
+    device = pick_device(device)
+    print(f"[train] device: {device}"
+         + (f" ({torch.cuda.get_device_name(0)})" if device.type == "cuda" else ""))
+    pin_memory = device.type == "cuda"
+
     train_set = Pipeline(train_dir, train=True, window=window,
                          num_keypoints=n_kpts, repeat=repeat)
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=batch_size, shuffle=True, num_workers=workers,
-        drop_last=True)
+        drop_last=True, pin_memory=pin_memory)
     val_loader = None
     if has_val:
         # A larger window than training's, matching mmskeleton's own recipe:
@@ -181,13 +186,11 @@ def train(data_root, epochs, batch_size, lr, window, val_window, layout,
         val_set = Pipeline(val_dir, train=False, window=val_window,
                            num_keypoints=n_kpts)
         val_loader = torch.utils.data.DataLoader(val_set, batch_size=batch_size,
-                                                 num_workers=workers)
+                                                 num_workers=workers,
+                                                 pin_memory=pin_memory)
     print(f"[train] clips: train={len(train_set)} (repeat={repeat}) "
          f"val={len(val_set) if val_loader else 0}")
 
-    device = pick_device(device)
-    print(f"[train] device: {device}"
-         + (f" ({torch.cuda.get_device_name(0)})" if device.type == "cuda" else ""))
     model = build_model(num_class, layout, dropout=dropout).to(device)
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9,
@@ -251,7 +254,8 @@ def evaluate_checkpoint(data_root, ckpt_path, batch_size, val_window, layout,
     val_dir = Path(data_root) / "val"
     val_set = Pipeline(val_dir, train=False, window=val_window, num_keypoints=n_kpts)
     loader = torch.utils.data.DataLoader(val_set, batch_size=batch_size,
-                                         num_workers=workers)
+                                         num_workers=workers,
+                                         pin_memory=(device.type == "cuda"))
     model = build_model(ckpt["num_class"], layout).to(device)
     model.load_state_dict(ckpt["state_dict"])
     top1, top5 = evaluate(model, loader, device)

@@ -50,10 +50,11 @@ import torch
 
 _HERE = Path(__file__).resolve().parent
 # Location of the effgcn_cam repo: EFFGCN_ROOT env var if set, else
-# ../effgcn_cam relative to this file (i.e. clone it as a sibling of this
-# train/ folder).
+# ../../effgcn_cam relative to this file -- i.e. clone it as a sibling of
+# the HumanPoseAction/ repo itself, not inside it (see stgcn_infer.py's
+# _MMSKELETON_ROOT comment for the same layout, mmskeleton's counterpart).
 EFFGCN_ROOT = Path(os.environ["EFFGCN_ROOT"]) if os.environ.get("EFFGCN_ROOT") \
-    else _HERE.parent / "effgcn_cam"
+    else _HERE.parent.parent / "effgcn_cam"
 
 # effgcn_cam must be importable as the top-level package root, because the repo
 # refers to its own modules as `src.model.layers...` (see nets.py import_class).
@@ -218,15 +219,17 @@ def train(data_root, epochs, batch_size, lr, window, work_dir, workers,
     n_params = sum(p.numel() for p in model.parameters())
     print(f"[train] device={device}  params={n_params/1e6:.2f}M  V={graph.num_node}")
 
+    pin_memory = device.type == "cuda"
     train_set = EffFeeder(train_dir, graph.connect_joint, window)
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=batch_size, shuffle=True, num_workers=workers,
-        drop_last=True)
+        drop_last=True, pin_memory=pin_memory)
     val_loader = None
     if has_val:
         val_set = EffFeeder(val_dir, graph.connect_joint, window)
         val_loader = torch.utils.data.DataLoader(
-            val_set, batch_size=batch_size, num_workers=workers)
+            val_set, batch_size=batch_size, num_workers=workers,
+            pin_memory=pin_memory)
     print(f"[train] clips: train={len(train_set)} val={len(val_set) if val_loader else 0}")
 
     loss_fn = torch.nn.CrossEntropyLoss()
@@ -288,7 +291,8 @@ def evaluate_checkpoint(data_root, ckpt_path, batch_size, workers, device="auto"
     model = model.to(device)
     val_set = EffFeeder(Path(data_root) / "val", graph.connect_joint, window)
     loader = torch.utils.data.DataLoader(val_set, batch_size=batch_size,
-                                         num_workers=workers)
+                                         num_workers=workers,
+                                         pin_memory=(device.type == "cuda"))
     top1, top5 = evaluate(model, loader, device)
     print(f"[eval] {ckpt_path} (epoch {ckpt.get('epoch')}) on {len(val_set)} "
           f"val clips:  top-1={100*top1:.2f}%  top-5={100*top5:.2f}%")
