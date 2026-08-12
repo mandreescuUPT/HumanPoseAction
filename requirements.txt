@@ -1,3 +1,9 @@
 mediapipe==0.10.9
 opencv-python>=4.8.0
 scipy
+
+# Optional — only needed for the corresponding --backend
+ultralytics>=8.0          # --backend yolo   (YOLO11-Pose)
+tensorflow<2.16           # --backend movenet (MoveNet Thunder) - pin <2.16 for mediapipe/protobuf compatibility
+tensorflow-hub>=0.13      # --backend movenet
+setuptools<81             # tensorflow-hub needs pkg_resources

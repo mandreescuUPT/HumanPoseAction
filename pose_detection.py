@@ -1,22 +1,24 @@
 """
 Pose Detection Pipeline
 ========================
-Detectează keypoints din video/webcam folosind MediaPipe BlazePose,
-vizualizează în OpenCV și salvează automat în JSON per frame.
+Detectează keypoints din video/webcam și salvează automat în JSON per frame.
+
+Supported backends:
+  - mediapipe  (default)  MediaPipe BlazePose — 33 keypoints, body/face/hands
+  - yolo                  Ultralytics YOLO11-Pose — 17 COCO keypoints, body
+  - movenet               MoveNet Thunder — 17 COCO keypoints, body
 
 Use cases automotive biometrics:
   - Body pose  → head pose, drowsiness (cap aplecat)
   - Face mesh  → blink rate, gaze direction
   - Hands      → gesture recognition, grip detection
 
-Instalare:
-  pip install mediapipe opencv-python
-
 Rulare:
-  python pose_detector.py --input video.mp4 --mode body
-  python pose_detector.py --input 0 --mode face          (webcam)
-  python pose_detector.py --input video.mp4 --mode hands
-  python pose_detector.py --input video.mp4 --mode body --no-display
+  python pose_detection.py --input video.mp4 --mode body
+  python pose_detection.py --input video.mp4 --mode body --backend yolo
+  python pose_detection.py --input video.mp4 --mode body --backend movenet
+  python pose_detection.py --input 0 --mode face          (webcam, mediapipe only)
+  python pose_detection.py --input video.mp4 --mode body --no-display
 """
 
 import cv2
@@ -28,6 +30,7 @@ from datetime import datetime
 from utils import save_json
 from config.constants import *
 from detector import PoseDetector, POSE_LANDMARK_NAMES, PoseDrawing, KeyPointsExtractor
+from detector import create_backend, AVAILABLE_BACKENDS
 
 def draw_overlay(frame, frame_idx, mode):
     """Info on frame."""
@@ -63,7 +66,8 @@ def resize_frame(frame, max_size: int):
 
 # ── Main pipeline ───────────────────────────────────────────────────────────────
 def run(input_source, mode: str, output_dir: Path, show_display: bool,
-        save_every: int, confidence: float, max_size: int):
+        save_every: int, confidence: float, max_size: int,
+        backend: str = "mediapipe"):
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -81,7 +85,7 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
     source_fps   = cap.get(cv2.CAP_PROP_FPS) or 30.0
 
     print(f"\n{'='*55}")
-    print(f"  Pose Detector — mode: {mode.upper()}")
+    print(f"  Pose Detector — mode: {mode.upper()}  backend: {backend}")
     print(f"  Source:  {input_source}")
     print(f"  Frames: {total_frames if total_frames > 0 else 'live'}")
     print(f"  Original res: {original_frame_w}x{original_frame_h} @ {source_fps:.1f} fps")
@@ -90,7 +94,17 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
     print(f"  Output: {output_dir}")
     print(f"{'='*55}\n")
 
-    detector = PoseDetector(mode=mode, min_detection_confidence=confidence)
+    # ── Instantiate the detector ────────────────────────────────────────────
+    use_legacy = (backend == "mediapipe")
+    if use_legacy:
+        detector = PoseDetector(mode=mode, min_detection_confidence=confidence)
+    else:
+        if mode != "body":
+            raise ValueError(
+                f"Backend '{backend}' only supports mode='body'. "
+                f"For face/hands, use --backend mediapipe."
+            )
+        detector = create_backend(backend, confidence=confidence)
 
     source_path = Path(input_source) if input_source != "0" else None
     source_file = source_path.stem if source_path else "webcam"
@@ -101,6 +115,7 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
             "source":               str(input_source),
             "source_file":          source_file,
             "mode":                 mode,
+            "backend":              backend,
             "timestamp":            datetime.now().isoformat(),
             "original_frame_w":     original_frame_w,
             "original_frame_h":     original_frame_h,
@@ -136,23 +151,29 @@ def run(input_source, mode: str, output_dir: Path, show_display: bool,
             fps_timer = now
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame_rgb.flags.writeable = False
-            results = detector.process(frame_rgb)
-            frame_rgb.flags.writeable = True
-
-            pose_drawing = PoseDrawing(results)
-            keypoints_extractor = KeyPointsExtractor(results)
 
             # Extract keypoints
             kp_data   = None
             det_count = 0
 
-            if mode == "body":
-                # kp_data = extract_body_keypoints(results, frame_w, frame_h)
-                kp_data = keypoints_extractor.body_keypoints(frame_w, frame_h)
+            if use_legacy:
+                # ── Original MediaPipe path (supports body/face/hands) ──────
+                frame_rgb.flags.writeable = False
+                results = detector.process(frame_rgb)
+                frame_rgb.flags.writeable = True
+
+                pose_drawing = PoseDrawing(results)
+                keypoints_extractor = KeyPointsExtractor(results)
+
+                if mode == "body":
+                    kp_data = keypoints_extractor.body_keypoints(frame_w, frame_h)
+                    det_count = 1 if kp_data else 0
+                    if show_display:
+                        pose_drawing.draw_body(frame)
+            else:
+                # ── New backend path (body only) ────────────────────────────
+                kp_data = detector.process(frame_rgb, frame_w, frame_h)
                 det_count = 1 if kp_data else 0
-                if show_display:                    
-                    pose_drawing.draw_body(frame)
 
             # elif mode == "face":
             #     kp_data = keypoints_extractor.face_keypoints(frame_w, frame_h)
@@ -244,6 +265,14 @@ def parse_args():
         help="Detection type: body (33 kp) | face (468 kp) | hands (21 kp) (default: body)"
     )
     parser.add_argument(
+        "--backend", "-b",
+        choices=AVAILABLE_BACKENDS,
+        default="mediapipe",
+        help=f"Pose estimation backend (default: mediapipe). "
+             f"Choices: {', '.join(AVAILABLE_BACKENDS)}. "
+             f"Note: face/hands modes only work with mediapipe."
+    )
+    parser.add_argument(
         "--output", "-o",
         default="./output",
         help="Output directory for JSON (default: ./output)"
@@ -284,4 +313,5 @@ if __name__ == "__main__":
         save_every=args.save_every,
         confidence=args.confidence,
         max_size=args.max_size,
+        backend=args.backend,
     )
